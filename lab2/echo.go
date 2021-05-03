@@ -32,6 +32,9 @@ var initiator bool
 var initiatorMessageSent bool
 var parent Node
 
+// This func receives the path of a configuration file, reads the content and
+// initialize the properties of the current node and his neighbors with the information
+// of the config file
 func configNodes(path string) {
 	content, err := ioutil.ReadFile(path)
 	initiator = false
@@ -59,6 +62,8 @@ func configNodes(path string) {
 	}
 }
 
+// The server is listening, and when it receives some message, it updates the received properties
+// for the neighbors
 func server(s Node) {
 	fmt.Println("Launching server...")
 	ln, _ := net.Listen("tcp", s.ip+":"+s.port)
@@ -76,6 +81,7 @@ func server(s Node) {
 
 }
 
+// Sends a message (s) to a given node. The message sent has the format ip:port:id:message
 func sendMessage(s string, n Node) {
 	conn, _ := net.Dial("tcp", n.ip+":"+n.port)
 
@@ -100,6 +106,8 @@ func checkNeighborServer(n []Node) bool {
 	return true
 }
 
+// Uses the sendMessage function to all the neighbours and updates the send propertie
+// for all the neighbors (except parent)
 func sendMessageAllNeighbors(message string) {
 	for i := 0; i < len(neighbors); i++ {
 		if neighbors[i].port != parent.port {
@@ -109,6 +117,7 @@ func sendMessageAllNeighbors(message string) {
 	}
 }
 
+// Trim text, depending on the operating system.
 func trimInput(text string) string {
 	result := ""
 	if runtime.GOOS == "windows" {
@@ -119,6 +128,7 @@ func trimInput(text string) string {
 	return result
 }
 
+// Finds a node in a given slice of neighbors by the ip and port of the node
 func findNodeByIdPort(ip string, port string) int {
 	index := -1
 	for i := 0; i < len(neighbors); i++ {
@@ -129,6 +139,10 @@ func findNodeByIdPort(ip string, port string) int {
 	return index
 }
 
+// Updates called when server receives some message. This func updates
+// the receive property of the neighbor that sents the message to the current node
+// and creating the parent node if it is the first time that the current node
+// receives a message. Then, it sends a message to all his neighbors.
 func updateReceived(message string, ip string, port string) {
 	posNode := findNodeByIdPort(ip, port)
 	n := neighbors[posNode]
@@ -145,6 +159,7 @@ func updateReceived(message string, ip string, port string) {
 	}
 }
 
+// Check if this node has received a message from all the neighbors
 func allNeighboursReceived() bool {
 	allReceived := true
 	for _, node := range neighbors {
